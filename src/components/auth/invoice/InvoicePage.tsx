@@ -18,9 +18,12 @@ import { useRouter } from "next/navigation";
 interface BillingItem {
   id: number;
   itemName: string;
+  quantity: number;
+  purity: string;
   netWeight: number;
   grossWeight: number;
-  amount: number;
+  amount: number; // net amount (97)
+  discount: number; // discount (3)
 }
 
 type Variant = "default" | "psj";
@@ -68,7 +71,16 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
   const [saving, setSaving] = useState(false);
 
   const [items, setItems] = useState<BillingItem[]>([
-    { id: 1, itemName: "", netWeight: 0, grossWeight: 0, amount: 0 },
+    {
+      id: 1,
+      itemName: "",
+      quantity: 0,
+      purity: "",
+      netWeight: 0,
+      grossWeight: 0,
+      amount: 0,
+      discount: 0,
+    },
   ]);
 
   useEffect(() => {
@@ -80,8 +92,22 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
     setCurrentDate(today);
   }, []);
 
-  const subTotal = items.reduce((s, it) => s + (Number(it.amount) || 0), 0);
-  const total = subTotal - (Number(oldPurchase) || 0);
+  const subTotal = items.reduce(
+    (sum, item) => sum + Number(item.amount || 0),
+    0
+  );
+
+  const totalDiscount = items.reduce(
+    (sum, item) => sum + Number(item.discount || 0),
+    0
+  );
+
+  const cgst = Number((totalDiscount / 2).toFixed(3));
+  const sgst = Number((totalDiscount / 2).toFixed(3));
+
+  const grandTotal = Number(
+    (subTotal + cgst + sgst - Number(oldPurchase || 0)).toFixed(3)
+  );
 
   const handleItemChange = (
     id: number,
@@ -90,10 +116,21 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
   ) => {
     setItems((prev) =>
       prev.map((item) => {
-        if (item.id === id) {
-          return { ...item, [field]: value } as BillingItem;
+        if (item.id !== id) return item;
+
+        const updated = { ...item, [field]: value };
+
+        if (field === "amount") {
+          const entered = Number(value) || 0;
+
+          const discount = Number((entered * 0.03).toFixed(3));
+          const netAmount = Number((entered - discount).toFixed(3));
+
+          updated.amount = netAmount; // 97
+          updated.discount = discount; // 3
         }
-        return item;
+
+        return updated;
       })
     );
   };
@@ -107,7 +144,16 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
     setDisableAdd(false);
     const next = [
       ...items,
-      { id: newId, itemName: "", netWeight: 0, grossWeight: 0, amount: 0 },
+      {
+        id: newId,
+        itemName: "",
+        quantity: 0,
+        purity: "",
+        netWeight: 0,
+        grossWeight: 0,
+        amount: 0,
+        discount: 0
+      },
     ];
     setItems(next);
     if (next.length >= 5) setDisableAdd(true);
@@ -137,12 +183,11 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
         oldPurchase,
         items,
         subTotal,
-        total,
+        grandTotal,
         mode: variant,
       };
 
       const res = await axios.post(saveApiUrl, payload);
-      console.log(res, "@@@@@");
       toast.success(res.data?.message || "Invoice saved");
     } catch (error: any) {
       console.log("Save error:", error);
@@ -170,6 +215,8 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
     }
   };
 
+  const format3 = (n: number) => Number(n || 0).toFixed(3);
+
   return (
     <>
       {/* MAIN PAGE UI (moderate, colorful) */}
@@ -183,7 +230,12 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
               <div className="flex items-center gap-2">
                 <Gem className="h-6 w-6 text-yellow-300" />
                 <div>
-                  <h1 className="text-lg font-semibold tracking-tight">
+                  <h1
+                    onClick={() =>
+                      router.push(variant === "psj" ? "/" : "/psj")
+                    }
+                    className="cursor-default hover:cursor-pointer text-lg font-semibold tracking-tight"
+                  >
                     Padamshree Jewellers
                   </h1>
                   <p className="text-[11px] opacity-80">
@@ -294,24 +346,14 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                 <table className="min-w-full border-collapse text-xs">
                   <thead className="bg-slate-50">
                     <tr className="border-b border-slate-200">
-                      <th className="px-2 py-2 text-left font-medium text-slate-600">
-                        #
-                      </th>
-                      <th className="px-2 py-2 text-left font-medium text-slate-600">
-                        Item Name
-                      </th>
-                      <th className="px-2 py-2 text-right font-medium text-slate-600">
-                        Net Wt
-                      </th>
-                      <th className="px-2 py-2 text-right font-medium text-slate-600">
-                        Gross Wt
-                      </th>
-                      <th className="px-2 py-2 text-right font-medium text-slate-600">
-                        Amount (₹)
-                      </th>
-                      <th className="px-2 py-2 text-center font-medium text-slate-600">
-                        Action
-                      </th>
+                      <th className="text-slate-600">#</th>
+                      <th className="text-slate-600">Particulars</th>
+                      <th className="text-slate-600">Qty</th>
+                      <th className="text-slate-600">Purity</th>
+                      <th className="text-slate-600">Net Wt</th>
+                      <th className="text-slate-600">Gross Wt</th>
+                      <th className="text-slate-600">Amount (₹)</th>
+                      <th className="text-center text-slate-600">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -340,6 +382,37 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                             className="w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-black focus:outline-none focus:ring-1 focus:ring-slate-700"
                           />
                         </td>
+                        <td className="px-2 py-1.5 text-right">
+                          <input
+                            type="number"
+                            value={item.quantity || ""}
+                            min={0}
+                            onChange={(e) =>
+                              handleItemChange(
+                                item.id,
+                                "quantity",
+                                Number(e.target.value)
+                              )
+                            }
+                            className="w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-right text-xs text-black"
+                          />
+                        </td>
+
+                        <td className="px-2 py-1.5 text-right">
+                          <input
+                            type="text"
+                            value={item.purity}
+                            onChange={(e) =>
+                              handleItemChange(
+                                item.id,
+                                "purity",
+                                e.target.value
+                              )
+                            }
+                            className="w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-right text-xs text-black"
+                          />
+                        </td>
+
                         <td className="px-2 py-1.5 text-right">
                           <input
                             type="number"
@@ -373,7 +446,6 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                         <td className="px-2 py-1.5 text-right">
                           <input
                             type="number"
-                            value={item.amount || ""}
                             onChange={(e) =>
                               handleItemChange(
                                 item.id,
@@ -381,8 +453,6 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                                 Number(e.target.value)
                               )
                             }
-                            min={0}
-                            step={0.01}
                             className="w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-right text-xs text-black focus:outline-none focus:ring-1 focus:ring-slate-700"
                           />
                         </td>
@@ -419,39 +489,29 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
               </div>
 
               <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-slate-600">
-                    Old Purchase (₹)
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      value={oldPurchase || ""}
-                      onChange={(e) => setOldPurchase(Number(e.target.value))}
-                      min={0}
-                      step={0.1}
-                      className="w-28 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs text-black focus:outline-none focus:ring-1 focus:ring-slate-700"
-                    />
-                    <span className="text-xs text-rose-600">
-                      -₹{oldPurchase.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="my-2 h-px bg-slate-200" />
-
-                <div className="flex items-center justify-between text-xs text-slate-700">
+                <div className="flex justify-between text-slate-600">
                   <span>Sub Total</span>
-                  <span>₹{subTotal.toFixed(2)}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-slate-700">
-                  <span>- Old Purchase</span>
-                  <span>-₹{oldPurchase.toFixed(2)}</span>
+                  <span>₹{format3(subTotal)}</span>
                 </div>
 
-                <div className="mt-2 flex items-center justify-between text-sm font-semibold text-slate-900">
+                <div className="flex justify-between text-slate-600">
+                  <span>CGST (1.5%)</span>
+                  <span>₹{format3(cgst)}</span>
+                </div>
+
+                <div className="flex justify-between text-slate-600">
+                  <span>SGST (1.5%)</span>
+                  <span>₹{format3(sgst)}</span>
+                </div>
+
+                <div className="flex justify-between text-rose-600">
+                  <span>Old Purchase</span>
+                  <span>- ₹{format3(oldPurchase)}</span>
+                </div>
+
+                <div className="mt-2 flex justify-between text-slate-600 text-sm font-semibold">
                   <span>Total Amount</span>
-                  <span>₹{total.toFixed(2)}</span>
+                  <span>₹{format3(grandTotal)}</span>
                 </div>
               </div>
 
@@ -476,16 +536,6 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                   <Printer className="h-4 w-4" />
                   Print Invoice
                 </button>
-
-                {/* NAVIGATION */}
-                <button
-                  type="button"
-                  onClick={() => router.push(variant === "psj" ? "/" : "/psj")}
-                  className="cursor-default hover:cursor-pointer inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  <ArrowRight className="h-4 w-4" />
-                  {variant === "psj" ? "Go to Home" : "Go to PSJ"}
-                </button>
               </div>
             </section>
           </div>
@@ -501,8 +551,9 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
         oldPurchase={oldPurchase}
         items={items}
         subTotal={subTotal}
-        total={total}
-      />
+        total={grandTotal} 
+        cgst={cgst} 
+        sgst={sgst}      />
     </>
   );
 }
@@ -516,6 +567,8 @@ type PrintBillProps = {
   oldPurchase: number;
   items: BillingItem[];
   subTotal: number;
+  cgst: number;
+  sgst: number;
   total: number;
 };
 
@@ -528,7 +581,11 @@ function PrintBill({
   items,
   subTotal,
   total,
+  cgst,
+  sgst
 }: PrintBillProps) {
+  const format3 = (num: number) => Number(num || 0).toFixed(3);
+
   return (
     <div
       className="bill-wrapper"
@@ -556,6 +613,7 @@ function PrintBill({
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-around",
+            paddingTop: "50px",
           }}
         >
           {/* ---------------- HEADER ---------------- */}
@@ -575,17 +633,18 @@ function PrintBill({
                     fontWeight: "bold",
                   }}
                 >
-                  Customer: {customerName || "—"}
+                  Name: {customerName || "—"}
                 </div>
                 <div
                   style={{
                     marginTop: "3px",
-                    fontSize: "10px",
+                    fontSize: "12px",
                     maxWidth: "80mm",
                     lineHeight: 1.2,
+                    fontWeight: "bold",
                   }}
                 >
-                  {customerAddress || "Address not set"}
+                  Address: {customerAddress || "Address not set"}
                 </div>
               </div>
 
@@ -596,7 +655,8 @@ function PrintBill({
                 <div
                   style={{
                     marginTop: "3px",
-                    fontSize: "10px",
+                    fontSize: "12px",
+                    fontWeight: "bold",
                   }}
                 >
                   Mob: {customerContact || "—"}
@@ -610,109 +670,31 @@ function PrintBill({
                 width: "100%",
                 borderCollapse: "collapse",
                 fontSize: "11px",
-                height: "200px",
+                marginTop: "4mm",
               }}
             >
               <thead>
-                <tr>
-                  <th
-                    style={{
-                      width: "6mm",
-                      border: "1px solid #444",
-                      padding: "4px",
-                    }}
-                  >
-                    #
-                  </th>
-                  <th
-                    style={{
-                      border: "1px solid #444",
-                      padding: "4px",
-                      textAlign: "left",
-                    }}
-                  >
-                    Item
-                  </th>
-                  <th
-                    style={{
-                      width: "28mm",
-                      border: "1px solid #444",
-                      padding: "4px",
-                      textAlign: "right",
-                    }}
-                  >
-                    Net Wt
-                  </th>
-                  <th
-                    style={{
-                      width: "28mm",
-                      border: "1px solid #444",
-                      padding: "4px",
-                      textAlign: "right",
-                    }}
-                  >
-                    Gross Wt
-                  </th>
-                  <th
-                    style={{
-                      width: "28mm",
-                      border: "1px solid #444",
-                      padding: "4px",
-                      textAlign: "right",
-                    }}
-                  >
-                    Amount (₹)
-                  </th>
+                <tr style={{ fontWeight: "bold" }}>
+                  <td style={{ width: "6mm" }}>#</td>
+                  <td>Particular</td>
+                  <td align="right">Qty</td>
+                  <td align="right">Purity</td>
+                  <td align="right">Net</td>
+                  <td align="right">Gross</td>
+                  <td align="right">Amount</td>
                 </tr>
               </thead>
 
               <tbody>
                 {items.map((it, idx) => (
                   <tr key={it.id}>
-                    <td
-                      style={{
-                        border: "1px solid #444",
-                        padding: "4px",
-                        textAlign: "center",
-                      }}
-                    >
-                      {idx + 1}
-                    </td>
-                    <td
-                      style={{
-                        border: "1px solid #444",
-                        padding: "4px",
-                      }}
-                    >
-                      {it.itemName}
-                    </td>
-                    <td
-                      style={{
-                        border: "1px solid #444",
-                        padding: "4px",
-                        textAlign: "right",
-                      }}
-                    >
-                      {it.netWeight || ""}
-                    </td>
-                    <td
-                      style={{
-                        border: "1px solid #444",
-                        padding: "4px",
-                        textAlign: "right",
-                      }}
-                    >
-                      {it.grossWeight || ""}
-                    </td>
-                    <td
-                      style={{
-                        border: "1px solid #444",
-                        padding: "4px",
-                        textAlign: "right",
-                      }}
-                    >
-                      {Number(it.amount || 0).toFixed(2)}
-                    </td>
+                    <td>{idx + 1}</td>
+                    <td>{it.itemName}</td>
+                    <td align="right">{it.quantity}</td>
+                    <td align="right">{it.purity}</td>
+                    <td align="right">{format3(it.netWeight)} gm</td>
+                    <td align="right">{format3(it.grossWeight)} gm</td>
+                    <td align="right">{format3(it.amount)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -720,29 +702,36 @@ function PrintBill({
           </div>
 
           {/* ---------------- FOOTER ---------------- */}
+          {/* ---------------- FOOTER ---------------- */}
           <div
             style={{
-              marginTop: "8px",
               display: "flex",
-              justifyContent: "flex-end",
-              gap: "20px",
-              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "10mm",
               fontSize: "11px",
             }}
           >
-            <div style={{}}>Old Purchase: ₹{oldPurchase.toFixed(2)}</div>
+            {/* LEFT – AMOUNT IN WORDS */}
+            <div style={{ maxWidth: "120mm", fontWeight: "bold" }}>
+              Amount (in words):
+              <br />
+              {numberToWords(total)}
+            </div>
 
-            <div style={{ textAlign: "right" }}>
-              <div>Sub Total: ₹{subTotal.toFixed(2)}</div>
-              <div>- ₹{oldPurchase.toFixed(2)}</div>
+            {/* RIGHT – TOTALS */}
+            <div style={{ textAlign: "right", minWidth: "60mm" }}>
+              <div>Sub Total : ₹{format3(subTotal)}</div>
+              <div>CGST @1.5% : ₹{format3(cgst)}</div>
+              <div>SGST @1.5% : ₹{format3(sgst)}</div>
+              <div>- Old Purchase : ₹{format3(oldPurchase)}</div>
               <div
                 style={{
-                  fontWeight: "bold",
-                  marginTop: "2px",
+                  marginTop: "4px",
                   fontSize: "12px",
+                  fontWeight: "bold",
                 }}
               >
-                Total: ₹{total.toFixed(2)}
+                Total : ₹{format3(total)}
               </div>
             </div>
           </div>
@@ -750,4 +739,65 @@ function PrintBill({
       </div>
     </div>
   );
+}
+
+function numberToWords(num: number): string {
+  if (!num) return "Zero Rupees Only";
+
+  const a = [
+    "",
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+    "Eight",
+    "Nine",
+    "Ten",
+    "Eleven",
+    "Twelve",
+    "Thirteen",
+    "Fourteen",
+    "Fifteen",
+    "Sixteen",
+    "Seventeen",
+    "Eighteen",
+    "Nineteen",
+  ];
+
+  const b = [
+    "",
+    "",
+    "Twenty",
+    "Thirty",
+    "Forty",
+    "Fifty",
+    "Sixty",
+    "Seventy",
+    "Eighty",
+    "Ninety",
+  ];
+
+  const inWords = (n: number): string => {
+    if (n < 20) return a[n];
+    if (n < 100) return b[Math.floor(n / 10)] + " " + a[n % 10];
+    if (n < 1000)
+      return a[Math.floor(n / 100)] + " Hundred " + inWords(n % 100);
+    if (n < 100000)
+      return inWords(Math.floor(n / 1000)) + " Thousand " + inWords(n % 1000);
+    if (n < 10000000)
+      return inWords(Math.floor(n / 100000)) + " Lakh " + inWords(n % 100000);
+    return (
+      inWords(Math.floor(n / 10000000)) + " Crore " + inWords(n % 10000000)
+    );
+  };
+
+  const rupees = Math.floor(num);
+  const paise = Math.round((num - rupees) * 1000);
+
+  return `${inWords(rupees).trim()} Rupees${
+    paise ? " and " + inWords(paise) + " Paise" : ""
+  } Only`;
 }

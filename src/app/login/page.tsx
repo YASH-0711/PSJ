@@ -26,7 +26,7 @@ export default function LoginPage() {
       console.log(response,"@@@@ ")
       toast.success("Login success");
       if(resData.isClient){
-        router.push("/");
+        router.push("/psj");
       }
       // if(resData.isAdminPSJ){
 
