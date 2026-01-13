@@ -478,66 +478,84 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
             </section>
 
             {/* Billing summary + actions */}
-            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                  <span
-                    className={`h-4 w-1 rounded-full ${theme.buttonPrimary}`}
-                  ></span>
-                  Billing Summary
-                </h2>
-              </div>
+<section className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+  <div className="mb-3 flex items-center justify-between">
+    <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+      <span
+        className={`h-4 w-1 rounded-full ${theme.buttonPrimary}`}
+      ></span>
+      Billing Summary
+    </h2>
+  </div>
 
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between text-slate-600">
-                  <span>Sub Total</span>
-                  <span>₹{format3(subTotal)}</span>
-                </div>
+  <div className="space-y-2 text-sm">
 
-                <div className="flex justify-between text-slate-600">
-                  <span>CGST (1.5%)</span>
-                  <span>₹{format3(cgst)}</span>
-                </div>
+    {/* ✅ OLD PURCHASE INPUT (ADDED BACK) */}
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-slate-600">Old Purchase (₹)</span>
+      <input
+        type="number"
+        min={0}
+        step={0.001}
+        value={oldPurchase || ""}
+        onChange={(e) => setOldPurchase(Number(e.target.value))}
+        className="w-28 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs text-black focus:outline-none focus:ring-1 focus:ring-slate-700"
+        placeholder="0.000"
+      />
+    </div>
 
-                <div className="flex justify-between text-slate-600">
-                  <span>SGST (1.5%)</span>
-                  <span>₹{format3(sgst)}</span>
-                </div>
+    <div className="h-px bg-slate-200 my-2" />
 
-                <div className="flex justify-between text-rose-600">
-                  <span>Old Purchase</span>
-                  <span>- ₹{format3(oldPurchase)}</span>
-                </div>
+    <div className="flex justify-between text-slate-600">
+      <span>Sub Total</span>
+      <span>₹{format3(subTotal)}</span>
+    </div>
 
-                <div className="mt-2 flex justify-between text-slate-600 text-sm font-semibold">
-                  <span>Total Amount</span>
-                  <span>₹{format3(grandTotal)}</span>
-                </div>
-              </div>
+    <div className="flex justify-between text-slate-600">
+      <span>CGST (1.5%)</span>
+      <span>₹{format3(cgst)}</span>
+    </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {/* SAVE */}
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving}
-                  className={`cursor-pointer inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white ${theme.buttonPrimary} ${theme.buttonPrimaryHover} disabled:cursor-not-allowed disabled:bg-slate-400`}
-                >
-                  <Save className="h-4 w-4" />
-                  {saving ? "Saving..." : "Save Invoice"}
-                </button>
+    <div className="flex justify-between text-slate-600">
+      <span>SGST (1.5%)</span>
+      <span>₹{format3(sgst)}</span>
+    </div>
 
-                {/* PRINT */}
-                <button
-                  type="button"
-                  onClick={handlePrint}
-                  className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  <Printer className="h-4 w-4" />
-                  Print Invoice
-                </button>
-              </div>
-            </section>
+    <div className="flex justify-between text-rose-600">
+      <span>Old Purchase</span>
+      <span>- ₹{format3(oldPurchase)}</span>
+    </div>
+
+    <div className="h-px bg-slate-300 my-2" />
+
+    <div className="flex justify-between text-sm font-semibold text-slate-900">
+      <span>Total Amount</span>
+      <span>₹{format3(grandTotal)}</span>
+    </div>
+  </div>
+
+  <div className="mt-4 flex gap-2">
+    <button
+      type="button"
+      onClick={handleSave}
+      disabled={saving}
+      className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white ${theme.buttonPrimary} ${theme.buttonPrimaryHover}`}
+    >
+      <Save className="h-4 w-4" />
+      {saving ? "Saving..." : "Save Invoice"}
+    </button>
+
+    <button
+      type="button"
+      onClick={handlePrint}
+      className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+    >
+      <Printer className="h-4 w-4" />
+      Print Invoice
+    </button>
+  </div>
+</section>
+
           </div>
         </div>
       </div>
@@ -742,10 +760,10 @@ function PrintBill({
 }
 
 function numberToWords(num: number): string {
-  if (!num) return "Zero Rupees Only";
+  if (!num || isNaN(num)) return "Zero Rupees Only";
 
   const a = [
-    "",
+    "Zero",
     "One",
     "Two",
     "Three",
@@ -781,23 +799,48 @@ function numberToWords(num: number): string {
   ];
 
   const inWords = (n: number): string => {
+    if (n === 0) return "Zero";
     if (n < 20) return a[n];
-    if (n < 100) return b[Math.floor(n / 10)] + " " + a[n % 10];
+    if (n < 100)
+      return (
+        b[Math.floor(n / 10)] +
+        (n % 10 ? " " + a[n % 10] : "")
+      );
     if (n < 1000)
-      return a[Math.floor(n / 100)] + " Hundred " + inWords(n % 100);
+      return (
+        a[Math.floor(n / 100)] +
+        " Hundred" +
+        (n % 100 ? " " + inWords(n % 100) : "")
+      );
     if (n < 100000)
-      return inWords(Math.floor(n / 1000)) + " Thousand " + inWords(n % 1000);
+      return (
+        inWords(Math.floor(n / 1000)) +
+        " Thousand" +
+        (n % 1000 ? " " + inWords(n % 1000) : "")
+      );
     if (n < 10000000)
-      return inWords(Math.floor(n / 100000)) + " Lakh " + inWords(n % 100000);
+      return (
+        inWords(Math.floor(n / 100000)) +
+        " Lakh" +
+        (n % 100000 ? " " + inWords(n % 100000) : "")
+      );
+
     return (
-      inWords(Math.floor(n / 10000000)) + " Crore " + inWords(n % 10000000)
+      inWords(Math.floor(n / 10000000)) +
+      " Crore" +
+      (n % 10000000 ? " " + inWords(n % 10000000) : "")
     );
   };
 
   const rupees = Math.floor(num);
   const paise = Math.round((num - rupees) * 1000);
 
-  return `${inWords(rupees).trim()} Rupees${
-    paise ? " and " + inWords(paise) + " Paise" : ""
-  } Only`;
+  let result = `${inWords(rupees)} Rupees`;
+
+  if (paise > 0) {
+    result += ` and ${inWords(paise)} Paise`;
+  }
+
+  return result + " Only";
 }
+
