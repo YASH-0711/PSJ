@@ -26,11 +26,11 @@ const invoiceSchema = new mongoose.Schema(
 );
 
 const Invoice =
-  mongoose.models.invoices || mongoose.model("bills", invoiceSchema);
+  mongoose.models.bills  || mongoose.model("bills", invoiceSchema);
 
   
 
   export const PsjInvoice =
-  mongoose.models.invoices || mongoose.model("psjbills", invoiceSchema);
+  mongoose.models.psjbills  || mongoose.model("psjbills", invoiceSchema);
 
   export default Invoice;

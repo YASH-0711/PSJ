@@ -26,6 +26,6 @@ const psjInvoiceSchema = new mongoose.Schema(
 );
 
 const Psj =
-  mongoose.models.invoices || mongoose.model("Psjbills", psjInvoiceSchema);
+  mongoose.models.Psjbills  || mongoose.model("Psjbills", psjInvoiceSchema);
 
 export default Psj;

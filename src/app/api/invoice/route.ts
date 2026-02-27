@@ -5,6 +5,15 @@ import Invoice from "@/models/invoiceModel";
 
 connect();
 
+export async function GET() {
+  try {
+    const invoices = await Invoice.find({}).sort({ createdAt: -1 }).lean();
+    return NextResponse.json({ data: invoices, success: true });
+  } catch (error: any) {
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const reqBody = await request.json();

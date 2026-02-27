@@ -94,25 +94,25 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
 
   const subTotal = items.reduce(
     (sum, item) => sum + Number(item.amount || 0),
-    0
+    0,
   );
 
   const totalDiscount = items.reduce(
     (sum, item) => sum + Number(item.discount || 0),
-    0
+    0,
   );
 
   const cgst = Number((totalDiscount / 2).toFixed(3));
   const sgst = Number((totalDiscount / 2).toFixed(3));
 
   const grandTotal = Number(
-    (subTotal + cgst + sgst - Number(oldPurchase || 0)).toFixed(3)
+    (subTotal + cgst + sgst - Number(oldPurchase || 0)).toFixed(3),
   );
 
   const handleItemChange = (
     id: number,
     field: keyof BillingItem,
-    value: string | number
+    value: string | number,
   ) => {
     setItems((prev) =>
       prev.map((item) => {
@@ -131,7 +131,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
         }
 
         return updated;
-      })
+      }),
     );
   };
 
@@ -152,7 +152,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
         netWeight: 0,
         grossWeight: 0,
         amount: 0,
-        discount: 0
+        discount: 0,
       },
     ];
     setItems(next);
@@ -194,7 +194,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
       toast.error(
         error?.response?.data?.message ||
           error?.response?.data?.error ||
-          "Failed to save invoice"
+          "Failed to save invoice",
       );
     } finally {
       setSaving(false);
@@ -255,6 +255,19 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                     Invoice Date: {currentDate || "—"}
                   </div>
                 </div>
+
+                {/* DASHBOARD BUTTON */}
+                <button
+                  onClick={() =>
+                    router.push(
+                      variant === "psj" ? "/psj/dashboard" : "/dashboard",
+                    )
+                  }
+                  className="cursor-pointer inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-white/20"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Dashboard
+                </button>
 
                 {/* LOGOUT BUTTON */}
                 <button
@@ -375,7 +388,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                               handleItemChange(
                                 item.id,
                                 "itemName",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             placeholder="Item name"
@@ -391,7 +404,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                               handleItemChange(
                                 item.id,
                                 "quantity",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                             className="w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-right text-xs text-black"
@@ -406,7 +419,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                               handleItemChange(
                                 item.id,
                                 "purity",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             className="w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-right text-xs text-black"
@@ -421,7 +434,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                               handleItemChange(
                                 item.id,
                                 "netWeight",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                             min={0}
@@ -436,7 +449,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                               handleItemChange(
                                 item.id,
                                 "grossWeight",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                             min={0}
@@ -450,7 +463,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                               handleItemChange(
                                 item.id,
                                 "amount",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                             className="w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-right text-xs text-black focus:outline-none focus:ring-1 focus:ring-slate-700"
@@ -478,84 +491,82 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
             </section>
 
             {/* Billing summary + actions */}
-<section className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-  <div className="mb-3 flex items-center justify-between">
-    <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-      <span
-        className={`h-4 w-1 rounded-full ${theme.buttonPrimary}`}
-      ></span>
-      Billing Summary
-    </h2>
-  </div>
+            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                  <span
+                    className={`h-4 w-1 rounded-full ${theme.buttonPrimary}`}
+                  ></span>
+                  Billing Summary
+                </h2>
+              </div>
 
-  <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-sm">
+                {/* ✅ OLD PURCHASE INPUT (ADDED BACK) */}
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-600">Old Purchase (₹)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.001}
+                    value={oldPurchase || ""}
+                    onChange={(e) => setOldPurchase(Number(e.target.value))}
+                    className="w-28 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs text-black focus:outline-none focus:ring-1 focus:ring-slate-700"
+                    placeholder="0.000"
+                  />
+                </div>
 
-    {/* ✅ OLD PURCHASE INPUT (ADDED BACK) */}
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-slate-600">Old Purchase (₹)</span>
-      <input
-        type="number"
-        min={0}
-        step={0.001}
-        value={oldPurchase || ""}
-        onChange={(e) => setOldPurchase(Number(e.target.value))}
-        className="w-28 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs text-black focus:outline-none focus:ring-1 focus:ring-slate-700"
-        placeholder="0.000"
-      />
-    </div>
+                <div className="h-px bg-slate-200 my-2" />
 
-    <div className="h-px bg-slate-200 my-2" />
+                <div className="flex justify-between text-slate-600">
+                  <span>Sub Total</span>
+                  <span>₹{format3(subTotal)}</span>
+                </div>
 
-    <div className="flex justify-between text-slate-600">
-      <span>Sub Total</span>
-      <span>₹{format3(subTotal)}</span>
-    </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>CGST (1.5%)</span>
+                  <span>₹{format3(cgst)}</span>
+                </div>
 
-    <div className="flex justify-between text-slate-600">
-      <span>CGST (1.5%)</span>
-      <span>₹{format3(cgst)}</span>
-    </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>SGST (1.5%)</span>
+                  <span>₹{format3(sgst)}</span>
+                </div>
 
-    <div className="flex justify-between text-slate-600">
-      <span>SGST (1.5%)</span>
-      <span>₹{format3(sgst)}</span>
-    </div>
+                <div className="flex justify-between text-rose-600">
+                  <span>Old Purchase</span>
+                  <span>- ₹{format3(oldPurchase)}</span>
+                </div>
 
-    <div className="flex justify-between text-rose-600">
-      <span>Old Purchase</span>
-      <span>- ₹{format3(oldPurchase)}</span>
-    </div>
+                <div className="h-px bg-slate-300 my-2" />
 
-    <div className="h-px bg-slate-300 my-2" />
+                <div className="flex justify-between text-sm font-semibold text-slate-900">
+                  <span>Total Amount</span>
+                  <span>₹{format3(grandTotal)}</span>
+                </div>
+              </div>
 
-    <div className="flex justify-between text-sm font-semibold text-slate-900">
-      <span>Total Amount</span>
-      <span>₹{format3(grandTotal)}</span>
-    </div>
-  </div>
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white ${theme.buttonPrimary} ${theme.buttonPrimaryHover}`}
+                >
+                  <Save className="h-4 w-4" />
+                  {saving ? "Saving..." : "Save Invoice"}
+                </button>
 
-  <div className="mt-4 flex gap-2">
-    <button
-      type="button"
-      onClick={handleSave}
-      disabled={saving}
-      className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white ${theme.buttonPrimary} ${theme.buttonPrimaryHover}`}
-    >
-      <Save className="h-4 w-4" />
-      {saving ? "Saving..." : "Save Invoice"}
-    </button>
-
-    <button
-      type="button"
-      onClick={handlePrint}
-      className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-    >
-      <Printer className="h-4 w-4" />
-      Print Invoice
-    </button>
-  </div>
-</section>
-
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  <Printer className="h-4 w-4" />
+                  Print Invoice
+                </button>
+              </div>
+            </section>
           </div>
         </div>
       </div>
@@ -569,9 +580,10 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
         oldPurchase={oldPurchase}
         items={items}
         subTotal={subTotal}
-        total={grandTotal} 
-        cgst={cgst} 
-        sgst={sgst}      />
+        total={grandTotal}
+        cgst={cgst}
+        sgst={sgst}
+      />
     </>
   );
 }
@@ -600,7 +612,7 @@ function PrintBill({
   subTotal,
   total,
   cgst,
-  sgst
+  sgst,
 }: PrintBillProps) {
   const format3 = (num: number) => Number(num || 0).toFixed(3);
 
@@ -801,11 +813,7 @@ function numberToWords(num: number): string {
   const inWords = (n: number): string => {
     if (n === 0) return "Zero";
     if (n < 20) return a[n];
-    if (n < 100)
-      return (
-        b[Math.floor(n / 10)] +
-        (n % 10 ? " " + a[n % 10] : "")
-      );
+    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? " " + a[n % 10] : "");
     if (n < 1000)
       return (
         a[Math.floor(n / 100)] +
@@ -843,4 +851,3 @@ function numberToWords(num: number): string {
 
   return result + " Only";
 }
-

@@ -43,12 +43,14 @@ export function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         '/',
-    '/login',
-    '/singup',
-    '/verifyemail',
-    '/psj',
-    "/signup/admin",
-    '/signup/client',
-    '/signup/admin-psj'
+        '/login',
+        '/singup',
+        '/verifyemail',
+        '/psj',
+        '/dashboard',
+        '/psj/dashboard',
+        "/signup/admin",
+        '/signup/client',
+        '/signup/admin-psj'
     ]
 }
