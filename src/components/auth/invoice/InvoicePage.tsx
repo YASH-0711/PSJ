@@ -105,7 +105,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
   const cgst = Number((totalDiscount / 2).toFixed(3));
   const sgst = Number((totalDiscount / 2).toFixed(3));
 
-  const grandTotal = Number(
+  const total = Number(
     (subTotal + cgst + sgst - Number(oldPurchase || 0)).toFixed(3),
   );
 
@@ -173,6 +173,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
   };
 
   const handleSave = async () => {
+    console.log(items,"@@@@ !@!@!@!")
     try {
       setSaving(true);
       const payload = {
@@ -183,11 +184,13 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
         oldPurchase,
         items,
         subTotal,
-        grandTotal,
+        total,
         mode: variant,
       };
+      console.log(payload,"@@$$$$$")
 
       const res = await axios.post(saveApiUrl, payload);
+      console.log(res,"@@@#!#!#!")
       toast.success(res.data?.message || "Invoice saved");
     } catch (error: any) {
       console.log("Save error:", error);
@@ -542,7 +545,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
 
                 <div className="flex justify-between text-sm font-semibold text-slate-900">
                   <span>Total Amount</span>
-                  <span>₹{format3(grandTotal)}</span>
+                  <span>₹{format3(total)}</span>
                 </div>
               </div>
 
@@ -580,7 +583,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
         oldPurchase={oldPurchase}
         items={items}
         subTotal={subTotal}
-        total={grandTotal}
+        total={total}
         cgst={cgst}
         sgst={sgst}
       />

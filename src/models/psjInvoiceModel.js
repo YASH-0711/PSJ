@@ -6,6 +6,8 @@ const itemSchema = new mongoose.Schema(
     netWeight: { type: Number, default: 0 },
     grossWeight: { type: Number, default: 0 },
     amount: { type: Number, default: 0 },
+    purity: { type: String },
+    quantity: { type: Number, default: 1 },
   },
   { _id: false }
 );

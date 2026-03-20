@@ -58,11 +58,11 @@ export default function EditModal({ item, open, onClose, onSave, saving, variant
       const row = { ...updated[index], [field]: value };
 
       // Auto-recalculate discount when amount changes
-      if (field === "amount") {
-        const entered = Number(value) || 0;
-        row.discount = Number((entered * 0.03).toFixed(3));
-        row.amount = Number((entered - row.discount).toFixed(3));
-      }
+      // if (field === "amount") {
+      //   const entered = Number(value) || 0;
+      //   // row.discount = Number((entered * 0.03).toFixed(3));
+      //   // row.amount = Number((entered - row.discount).toFixed(3));
+      // }
 
       updated[index] = row;
 
@@ -199,7 +199,7 @@ export default function EditModal({ item, open, onClose, onSave, saving, variant
                   type="number"
                   value={subTotal || ""}
                   min={0}
-                  step={0.001}
+                  // step={0.001}
                   onChange={(e) => setSubTotal(Number(e.target.value))}
                   className={`w-32 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 text-right focus:outline-none focus:ring-2 ${accent.ring} bg-white`}
                 />
