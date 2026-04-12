@@ -23,6 +23,13 @@ const psjInvoiceSchema = new mongoose.Schema(
     subTotal: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
     mode: { type: String, default: "default" },
+    metalType: { type: String },
+
+  totalGold: { type: Number, default: 0 },
+  totalSilver: { type: Number, default: 0 },
+
+  cashPayment: { type: Number, default: 0 },
+  onlinePayment: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

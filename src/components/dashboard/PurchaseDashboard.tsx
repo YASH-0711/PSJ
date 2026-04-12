@@ -125,10 +125,10 @@ export default function PurchaseDashboard({ variant, apiBase }: PurchaseDashboar
       {/* Page title */}
       <div className="mb-6">
         <h1 className="text-2xl font-extrabold text-slate-800">Purchase Records</h1>
-        <p className="text-sm text-slate-400 mt-1">
+        {/* <p className="text-sm text-slate-400 mt-1">
           {variant === "psj" ? "PSJ Portal" : "Standard Portal"} ·{" "}
           <code className="bg-slate-100 px-2 py-0.5 rounded text-xs text-slate-600">{apiBase}</code>
-        </p>
+        </p> */}
       </div>
 
       {/* Stats */}

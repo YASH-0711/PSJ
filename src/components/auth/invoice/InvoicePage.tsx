@@ -20,6 +20,7 @@ interface BillingItem {
   itemName: string;
   quantity: number;
   purity: string;
+  metalType: string;
   netWeight: number;
   grossWeight: number;
   amount: number; // net amount (97)
@@ -69,6 +70,8 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
   const [oldPurchase, setOldPurchase] = useState(0);
   const [disableAdd, setDisableAdd] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [cashPayment, setCashPayment] = useState(0);
+  const [onlinePayment, setOnlinePayment] = useState(0);
 
   const [items, setItems] = useState<BillingItem[]>([
     {
@@ -76,6 +79,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
       itemName: "",
       quantity: 0,
       purity: "",
+      metalType: "",
       netWeight: 0,
       grossWeight: 0,
       amount: 0,
@@ -108,6 +112,14 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
   const total = Number(
     (subTotal + cgst + sgst - Number(oldPurchase || 0)).toFixed(3),
   );
+
+const totalGold = items
+  .filter((i) => i.metalType === "gold")
+  .reduce((sum, i) => sum + Number(i.netWeight || 0), 0);
+
+const totalSilver = items
+  .filter((i) => i.metalType === "silver")
+  .reduce((sum, i) => sum + Number(i.netWeight || 0), 0);
 
   const handleItemChange = (
     id: number,
@@ -149,6 +161,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
         itemName: "",
         quantity: 0,
         purity: "",
+        metalType: "",
         netWeight: 0,
         grossWeight: 0,
         amount: 0,
@@ -171,11 +184,15 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
       window.print();
     }
   };
-
   const handleSave = async () => {
-    console.log(items,"@@@@ !@!@!@!")
     try {
+      if (cashPayment + onlinePayment !== total) {
+        toast.error("Payment mismatch with total amount");
+        return;
+      }
+
       setSaving(true);
+
       const payload = {
         customerName,
         customerAddress,
@@ -183,17 +200,23 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
         date: currentDate,
         oldPurchase,
         items,
+
         subTotal,
         total,
+
+        // ✅ NEW FIELDS
+        cashPayment,
+        onlinePayment,
+        totalGold,
+        totalSilver,
+
         mode: variant,
       };
-      console.log(payload,"@@$$$$$")
 
       const res = await axios.post(saveApiUrl, payload);
-      console.log(res,"@@@#!#!#!")
+
       toast.success(res.data?.message || "Invoice saved");
     } catch (error: any) {
-      console.log("Save error:", error);
       toast.error(
         error?.response?.data?.message ||
           error?.response?.data?.error ||
@@ -363,6 +386,7 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                   <thead className="bg-slate-50">
                     <tr className="border-b border-slate-200">
                       <th className="text-slate-600">#</th>
+                      <th className="text-slate-600">Metal</th>
                       <th className="text-slate-600">Particulars</th>
                       <th className="text-slate-600">Qty</th>
                       <th className="text-slate-600">Purity</th>
@@ -382,6 +406,24 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                       >
                         <td className="px-2 py-1.5 text-slate-700">
                           {index + 1}
+                        </td>
+
+                        <td className="px-2 py-1.5 text-right">
+                          <select
+                            value={item.metalType}
+                            onChange={(e) =>
+                              handleItemChange(
+                                item.id,
+                                "metalType",
+                                e.target.value,
+                              )
+                            }
+                            className="w-[80] rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-black"
+                          >
+                            <option value="">Select</option>
+                            <option value="gold">Gold</option>
+                            <option value="silver">Silver</option>
+                          </select>
                         </td>
                         <td className="px-2 py-1.5">
                           <input
@@ -541,7 +583,31 @@ export default function InvoicePage({ variant, saveApiUrl }: InvoicePageProps) {
                   <span>- ₹{format3(oldPurchase)}</span>
                 </div>
 
-                <div className="h-px bg-slate-300 my-2" />
+                <div className="h-px bg-slate-200 my-2" />
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-600">Cash Payment (₹)</span>
+                  <input
+                    type="number"
+                    value={cashPayment || ""}
+                    onChange={(e) => setCashPayment(Number(e.target.value))}
+                    min={0}
+                    className="w-28 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs text-black focus:outline-none focus:ring-1 focus:ring-slate-700"
+                    placeholder="0.000"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-600">Online Payment (₹)</span>
+                  <input
+                    type="number"
+                    value={onlinePayment || ""}
+                    onChange={(e) => setOnlinePayment(Number(e.target.value))}
+                    min={0}
+                    className="w-28 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs text-black focus:outline-none focus:ring-1 focus:ring-slate-700"
+                    placeholder="0.000"
+                  />
+                </div>
 
                 <div className="flex justify-between text-sm font-semibold text-slate-900">
                   <span>Total Amount</span>

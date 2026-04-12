@@ -52,7 +52,7 @@ const themeConfig = {
 interface AdminLayoutProps {
   children: React.ReactNode;
   variant: DashboardTheme;
-  activeTab?: "dashboard" | "billing";
+  activeTab?: "dashboard" | "sales";
 }
 
 export default function AdminLayout({
@@ -78,20 +78,26 @@ export default function AdminLayout({
     }
   };
 
-  const navItems = [
-    {
-      id: "dashboard",
-      label: "Purchase Records",
-      icon: LayoutDashboard,
-      route: variant === "psj" ? "/psj/dashboard" : "/dashboard",
-    },
-    {
-      id: "billing",
-      label: theme.billingLabel,
-      icon: FileText,
-      route: theme.billingRoute,
-    },
-  ];
+const navItems = [
+  {
+    id: "dashboard",
+    label: "Purchase Records",
+    icon: LayoutDashboard,
+    route: variant === "psj" ? "/psj/dashboard" : "/dashboard",
+  },
+  {
+    id: "sales",
+    label: "Sales Records",
+    icon: LayoutDashboard,
+    route: variant === "psj" ? "/psj/sales" : "/sales", // ✅ FIXED
+  },
+  {
+    id: "billing",
+    label: theme.billingLabel,
+    icon: FileText,
+    route: theme.billingRoute,
+  },
+];
 
   return (
     <div className="flex min-h-screen bg-slate-100">
@@ -112,7 +118,9 @@ export default function AdminLayout({
           </div>
           {sidebarOpen && (
             <div className="overflow-hidden">
-              <div className="text-white font-bold text-sm leading-tight whitespace-nowrap">
+              <div className="text-white font-bold text-sm leading-tight whitespace-nowrap"
+              onClick={() => router.push(theme.switchRoute)}
+              >
                 Padamshree
               </div>
               <div className={`text-xs ${theme.accentColor} whitespace-nowrap`}>
@@ -158,7 +166,7 @@ export default function AdminLayout({
         </nav>
 
         {/* Switch Portal */}
-        {sidebarOpen && (
+        {/* {sidebarOpen && (
           <div className={`px-3 py-3 border-t ${theme.accentBorder}`}>
             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 px-1">
               Switch Portal
@@ -171,7 +179,7 @@ export default function AdminLayout({
               {theme.switchLabel}
             </button>
           </div>
-        )}
+        )} */}
 
         {/* Logout */}
         <div className={`px-3 py-4 border-t ${theme.accentBorder}`}>

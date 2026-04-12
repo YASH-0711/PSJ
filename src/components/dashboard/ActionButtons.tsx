@@ -22,6 +22,13 @@ export interface InvoiceRecord {
   }>;
   mode: string;
   createdAt: string;
+      metalType: string;
+
+  totalGold: number;
+  totalSilver: number;
+
+  cashPayment: number;
+  onlinePayment: number;
 }
 
 interface ActionButtonsProps {
