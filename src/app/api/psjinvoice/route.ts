@@ -28,6 +28,10 @@ export async function POST(request: NextRequest) {
       subTotal: reqBody.subTotal || 0,
       total: reqBody.total || 0,
       mode: reqBody.mode || "psj",
+            cashPayment: reqBody.cashPayment || 0,
+      onlinePayment: reqBody.onlinePayment || 0,
+      totalGold: reqBody.totalGold || 0,
+      totalSilver: reqBody.totalSilver || 0
     });
 
     const savedUser = await invoice.save();
